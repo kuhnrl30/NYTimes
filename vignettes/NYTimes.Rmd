@@ -9,7 +9,7 @@ output:
 vignette: >
     %\VignetteIndexEntry{NY Times Blog Analysis}
     %\VignetteEngine{knitr::rmarkdown}
-    \usepackage[utf8]{inputenc}
+    %\VignetteEncoding{UTF-8}
 ---
 
 ```{r echo=FALSE}
