@@ -1,6 +1,24 @@
-# environment ----
-setwd(paste("C:/users/",Sys.getenv("USERNAME"),"/dropbox/rprojects/nytimes",sep=""))
+---
+title: "NY Time Blog Analysis"
+author: "Ryan Kuhn"
+date: "July 7, 2016"
+output: 
+  prettydoc::html_pretty:
+    theme: leonids
+    highlight: github
+vignette: >
+    %\VignetteIndexEntry{NY Times Blog Analysis}
+    %\VignetteEngine{knitr::rmarkdown}
+    \usepackage[utf8]{inputenc}
+---
 
+```{r echo=FALSE}
+knitr::opts_chunk$set(message = FALSE, warning = FALSE)
+library(knitr)
+```
+
+#### Setup the environment and load the data 
+```{r}
 library(tm)
 library(rpart)
 library(rpart.plot)
@@ -10,48 +28,40 @@ library(ROCR)
 library(caret)
 library(randomForest)
 library(gbm)
+library(NYTimes)
 
-train<- read.csv("data/NYtimesblogtrain.csv", stringsAsFactors=F)
-test<- read.csv("data/nytimesblogtest.csv", stringsAsFactors=F)
+data(trainingset)
+data(testingset)
+train<- trainingset
+test <- testingset
+```
 
-# Data cleanup ----
+### Data Cleaning
+
+#### Setting factors
+```{r}
+lvls<- c("Business","","Culture","Foreign", "Magazine","Metro","OpEd", "Science","Sports","Styles", "Travel","TStyle","National")
+
+train$NewsDesk<- factor(train$NewsDesk, levels=lvls)
+test$NewsDesk <- factor(test$NewsDesk, levels=lvls)
 
 
-train$NewsDesk<-factor(train$NewsDesk,
-                          levels=c("Business","","Culture","Foreign",
-                                   "Magazine","Metro","OpEd",
-                                   "Science","Sports","Styles",
-                                   "Travel","TStyle","National"))
+train$SectionName   <- relevel(as.factor(train$SectionName),"Business Day")
+train$SubsectionName<- relevel(as.factor(train$SubsectionName), "Dealbook")
 
-train$SectionName<- as.factor(train$SectionName)
-train$SectionName<- relevel(train$SectionName,"Business Day")
+test$SectionName   <- factor(test$SectionName, levels=levels(train$SectionName))
+test$SubsectionName<- factor(test$SubsectionName, levels=levels(train$SubsectionName))
 
-train$SubsectionName<- as.factor(train$SubsectionName)
-train$SubsectionName<- relevel(train$SubsectionName, "Dealbook")
 
 train$PubDate<- as.POSIXct(train$PubDate,format= "%Y-%m-%e")
-train$wkday<- factor(weekdays(train$PubDate))
-train$wkday<- relevel(train$wkday,"Friday")
-
-
-test$NewsDesk<- factor(test$NewsDesk,
-                       levels=c("Business","","Culture","Foreign",
-                                "Magazine","Metro","OpEd",
-                                "Science","Sports","Styles",
-                                "Travel","TStyle","National"))
-
-test$SectionName<- factor(test$SectionName, 
-                          levels=levels(train$SectionName))
-
-
-test$SubsectionName<- factor(test$SubsectionName,
-                             levels=levels(train$SubsectionName))
+train$wkday  <- relevel(as.factor(weekdays(train$PubDate)),"Friday")
 
 test$PubDate<- as.POSIXct(test$PubDate,format="%Y-%m-%e")
-test$wkday<- factor(weekdays(test$PubDate),
-                    levels=levels(train$wkday))
+test$wkday  <- factor(weekdays(test$PubDate), levels=levels(train$wkday))
+```
 
-# Headline type- train
+#### Formatting headlines
+```{r}
 Questions <- grep("?", train$Headline, fixed=T)
 QnA       <- grep("Q. and A.", train$Headline, fixed=T)
 Gift      <- grep("The Daily Gift", train$Headline, fixed=T)
@@ -64,10 +74,10 @@ train$type[Questions] <-"Question"
 train$type[Gift]      <-"Gift"
 train$type[Clip]      <-"Clip"
 train$type[Recap]     <-"Recap"
-train$type<- factor(train$type, 
-                    levels=c("None","Question","Gift","Clip","QnA","Recap"))
+train$type<- factor(train$type, levels=c("None","Question","Gift","Clip","QnA","Recap"))
 
-# Headline type- test
+
+
 Questions <- grep("?", test$Headline, fixed=T)
 QnA       <- grep("Q. and A.", test$Headline, fixed=T)
 Gift      <- grep("The Daily Gift", test$Headline, fixed=T)
@@ -80,53 +90,56 @@ test$type[Questions] <-"Question"
 test$type[Gift]      <-"Gift"
 test$type[Clip]      <-"Clip"
 test$type[Recap]     <-"Recap"
-test$type<- factor(test$type, 
-                   levels=c("None","Question","Gift","Clip","QnA","Recap"))
+test$type<- factor(test$type, levels=c("None","Question","Gift","Clip","QnA","Recap"))
+```
 
+### Modeling 
 
-  
-
-# Split dataset ----
+#### Split the training dataset  
+```{r}
 split<- sample.split(train$Popular, SplitRatio=.7)
 
 Ttrain<- subset(train, split==TRUE)
-Ttest<- subset(train, split==FALSE)
+Ttest <- subset(train, split==FALSE)
 rm(split)
+```
 
-# Baseline model ----
+#### Baseline model
+
+```{r, results='hold'}
 Ttrain %>%
   group_by(Popular) %>%
   select(Popular) %>%
   summarise(N=n())
 
-
-# Baseline percentage is 83%
 Base<-3807/nrow(Ttrain)
 BasePred<-rep(Base,nrow(Ttest))
 
 ROCRpred<-prediction(BasePred,Ttest$Popular)
 ROCRperf<- performance(ROCRpred,"tpr","fpr")
 plot(ROCRperf)
-performance(ROCRpred,"auc")@y.values
-# Base AUC score is 0.5
+```
 
-Submit<-data.frame(UniqueID=test$UniqueID,Probability1=rep(Base,nrow(test)))
-write.csv(Submit,"SubmitBase.csv", row.names=F)
-rm(Base,Submit)
+Baseline percentage is 83%
+Base AUC score is is `r round(unlist(performance(ROCRpred,"auc")@y.values),3)`
 
-# Train Logrithmic regression ----
+#### Logistic Regression
 
+```{r}
 LogMdl<- glm(Popular~.,data=Ttrain[,c(1,7,9,11,12)], family=binomial)
 PredLog<-predict(LogMdl,newdata=Ttest[,c(1,7,9,11,12)],type="response")
 
 
 ROCRpred<-prediction(PredLog,Ttest$Popular)
 ROCRperf<- performance(ROCRpred,"tpr","fpr")
-performance(ROCRpred,"auc")@y.values
 plot(ROCRperf)
-# AUC score is 0.8971
+```
 
-# Train Clustering ----
+AUC score is `r round(unlist(performance(ROCRpred, "auc")@y.values),3)`
+
+#### Clustering
+*Except...* clustering is doesn't work for predictions.  You'd have to do seperate models for each cluster.
+```{r, fig.width= 7, fig.height=4, fig.align='center', results='hide'}
 Tcluster<-Ttrain[,c(1:3,9,11)]
 Tcluster$time<-scale(Ttrain$WordCount)
 
@@ -142,12 +155,12 @@ clusterGroups<-data.frame(clusters=matrix(clusterGroups,ncol=1))
 
 clustdummies<-dummyVars(clusters~.,data=clusterGroups)
 clusterGroupsdumb<-as.data.frame(predict(clustdummies,newdata=clusterGroups))
+```
 
-# clustering doesn't work for predictions!!
+### Text Analytics  
+#### Prepare the training set
 
-# Train NLP ----
-
-# Prepare training set
+```{r, results='hide'}
 TrainCorpus<-Corpus(VectorSource(Ttrain$Abstract))
 TrainCorpus<-tm_map(TrainCorpus,content_transformer(tolower))
 TrainCorpus<-tm_map(TrainCorpus, PlainTextDocument)
@@ -166,10 +179,10 @@ Targets<-colnames(wordsTrain)
 colnames(wordsTrain) = paste("A", colnames(wordsTrain),sep="")
 
 TextTrain<-data.frame(wordsTrain,Ttrain$Popular, row.names=NULL)
+```
 
-TextLogMdl<-glm(Ttrain.Popular~.,data=TextTrain,family=binomial)
-
-# Prepare test set
+#### Prepare test set
+```{r, results= 'hide', collapse=TRUE}
 TestCorpus<-Corpus(VectorSource(Ttest$Abstract))
 TestCorpus<-tm_map(TestCorpus,content_transformer(tolower))
 TestCorpus<-tm_map(TestCorpus, PlainTextDocument)
@@ -181,20 +194,28 @@ dtmTest<- DocumentTermMatrix(TestCorpus)
 wordsTest<-inspect(dtmTest[,colnames(dtmTest) %in% Targets])
 colnames(wordsTest) = paste("A", colnames(wordsTest),sep="")
 TextTest<-data.frame(wordsTest,Ttest$Popular,row.names=NULL)
+```
+
+#### Prepare the model 
+
+```{r, collapse= TRUE, results='hide'}
+TextLogMdl<-glm(Ttrain.Popular~.,data=TextTrain,family=binomial)
 
 TextLogPred<- as.numeric(predict(TextLogMdl,newdata=TextTest,type="response"))
 
 table(Ttest$Popular,TextLogPred>.5)
 table(train$Popular)
 
-ROCRpred<-prediction(TextLogPred,Ttest$Popular)
+ROCRpred<- prediction(TextLogPred,Ttest$Popular)
 ROCRperf<- performance(ROCRpred,"tpr","fpr")
-performance(ROCRpred,"auc")@y.values
 plot(ROCRperf)
-#AUC is 0.704- not an improvement over Logistic Reg
+```
 
-# Train CART---- 
+AUC score is `r round(unlist(performance(ROCRpred,"auc")@y.values),3)`
 
+#### Train CART
+
+```{r, fig.width= 7}
 CART<- rpart(Popular~.,data=Ttrain[,c(1,7,9,11,12)], 
              method="class",           
              na.action=na.rpart,
@@ -208,16 +229,17 @@ prp(CART,
     box.col=c("pink","palegreen")[CART$frame$yval],
     leaf.round=2)
 
-CARTPred   <- predict(CART,newdata=Ttest[,c(1,7,9,11,12)], type="prob")
+CARTPred<- predict(CART,newdata=Ttest[,c(1,7,9,11,12)], type="prob")
 
-ROCRpred<-prediction(CARTPred[,2],Ttest$Popular)
+ROCRpred<- prediction(CARTPred[,2],Ttest$Popular)
 ROCRperf<- performance(ROCRpred,"tpr","fpr")
-performance(ROCRpred,"auc")@y.values
 plot(ROCRperf)
-#AUC is 0.71791- not an improvement over GLM
+```
 
-# Train Random Forest ----
+AUC score is `r round(unlist(performance(ROCRpred,"auc")@y.values),3)` and is not an improvement over the GLM model. 
 
+#### Train Random Forest 
+```{r}
 Forest<- randomForest(as.factor(Popular)~.,
                       data=Ttrain[,c(1,7,9,11,12)],
                       nodesize=5)
@@ -227,17 +249,17 @@ ForestPred<-predict(Forest,
                     type="prob",
                     metric="ROC")
 
-ROCRpred<-prediction(ForestPred[,2],Ttest$Popular)
+ROCRpred<- prediction(ForestPred[,2],Ttest$Popular)
 ROCRperf<- performance(ROCRpred,"tpr","fpr")
-performance(ROCRpred,"auc")@y.values
 plot(ROCRperf)
-#AUC is 0.87708- not an improvement over GLM
 
 ForestPred2<-predict(Forest,newdata=test[,c(1,7,10,11)], type="prob",metric="ROC")
-Submit2<-data.frame(UniqueID=test$UniqueID,Probability1=ForestPred2[,2])
-write.csv(Submit2,"SubmitERandomForest.csv",row.names=F)
+```
 
-# Random Forest Part 2 ----
+AUC score is `r round(unlist(performance(ROCRpred,"auc")@y.values),3)` and is not an improvement over the GLM model. 
+
+#### Random Forest Using Text Analytics
+```{r}
 TtrainComb<- data.frame(TextTrain, Ttrain[,c(1:3, 7:8,11:12)])
 
 ForestComb<- randomForest(as.factor(Ttrain.Popular)~.,
@@ -251,13 +273,15 @@ ForestPredComb<-predict(ForestComb,
                         type="prob",
                         metric="ROC")
 
-ROCRpred<-prediction(ForestPredComb[,2],Ttest$Popular)
+ROCRpred<- prediction(ForestPredComb[,2],Ttest$Popular)
 ROCRperf<- performance(ROCRpred,"tpr","fpr")
-performance(ROCRpred,"auc")@y.values
 plot(ROCRperf)
-# AUC is 0.9453- best model yet!
+```
 
-# Train Ensembling ----
+AUC score is `r round(unlist(performance(ROCRpred,"auc")@y.values),3)`- best model yet!
+
+#### Train ensembling
+```{r}
 AUCs<-c(.8756,.7048,.7249,.8811,.9453)
 Predictions<- data.frame(GLM=PredLog,
                          Text=TextLogPred, 
@@ -268,13 +292,16 @@ weights<-c(.20,.20,.20,.20,.20)
 weightedPred<-Predictions*weights
 Temp<- rowSums(weightedPred,na.rm=T)
 
-ROCRpred<-prediction(Temp,Ttest$Popular)
+ROCRpred<- prediction(Temp,Ttest$Popular)
 ROCRperf<- performance(ROCRpred,"tpr","fpr")
-performance(ROCRpred,"auc")@y.values
 plot(ROCRperf)
-# AUC 0.9275
+```
 
-# Test NLP ----
+AUC score is `r round(unlist(performance(ROCRpred,"auc")@y.values),3)`
+
+
+#### Test NLP 
+```{r, results= 'hide'}
 TestCorpus2<-Corpus(VectorSource(test$Abstract))
 TestCorpus2<-tm_map(TestCorpus2, content_transformer(tolower))
 TestCorpus2<-tm_map(TestCorpus2, PlainTextDocument)
@@ -286,8 +313,10 @@ dtmTest2<- DocumentTermMatrix(TestCorpus2)
 wordsTest2<-inspect(dtmTest2[,colnames(dtmTest2) %in% Targets])
 colnames(wordsTest2) = paste("A", colnames(wordsTest2),sep="")
 TextTest2<-data.frame(wordsTest2,row.names=NULL)
+```
 
-# Test Random Forest 2 ----
+#### Test Random Forest 2
+```{r}
 TtestComb2<- data.frame(TextTest2, test[,c(1:3,7:8,10:11)])
 
 
@@ -308,8 +337,10 @@ ForestPredComb2 <- predict(ForestComb,
                            newdata=TtestComb2,
                            type="prob",
                            metric="ROC")
+```
 
-# weight the models
+#### Weight the Models
+```{r}
 Predictions2<- data.frame(GLM=PredLog2,
                           Text=TextLogPred2, 
                           CART=CARTPred2[,2], 
@@ -320,8 +351,7 @@ Temp2<- rowSums(weightedPred2,na.rm=T)
 
 
 Submit2<-data.frame(UniqueID=test$UniqueID,Probability1=Temp2)
-write.csv(Submit2,"SubmitEnsembled.csv",row.names=F)
 
 # Just RandomForestComn
 Submit2<-data.frame(UniqueID=test$UniqueID,Probability1=ForestPredComb2[,2])
-write.csv(Submit2,"SubmitERandomForestComb.csv",row.names=F)
+```
