@@ -1,2 +1,15 @@
-language: R
+language: r
+sudo: false
 cache: packages
+r_packages: 
+  - prettydoc
+  - tm
+  - rpart
+  - rpart.plot
+  - caret
+  - dplyr
+  - caTools
+  - ROCR
+  - randomForest
+  - gbm
+  

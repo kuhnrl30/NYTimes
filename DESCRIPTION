@@ -9,11 +9,11 @@ Description: The vignette in this package contains the code to prepare the submi
 	NY Times Kaggle competition.  The objective was to predict whether a blog post would be 
 	popular. The final accuracy score was used to determine the grade in the Analytics Edge 
 	course on EdX.
-License: MIT + LICENSE
+License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 BuildVignettes: TRUE
 Suggests: knitr,
     rmarkdown
 VignetteBuilder: knitr
-RoxygenNote: 5.0.1
+RoxygenNote: 6.0.1
