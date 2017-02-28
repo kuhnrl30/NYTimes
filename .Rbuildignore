@@ -4,3 +4,4 @@
 ^docs/*
 ^\.Rhistory
 ^\.gitignore
+_config.yml
