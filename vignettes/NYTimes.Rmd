@@ -2,10 +2,7 @@
 title: "NY Time Blog Analysis"
 author: "Ryan Kuhn"
 date: "July 7, 2016"
-output: 
-  prettydoc::html_pretty:
-    theme: leonids
-    highlight: github
+output: html_vignette
 vignette: >
     %\VignetteIndexEntry{NY Times Blog Analysis}
     %\VignetteEngine{knitr::rmarkdown}
@@ -32,6 +29,7 @@ library(NYTimes)
 
 data(trainingset)
 data(testingset)
+
 train<- trainingset
 test <- testingset
 ```

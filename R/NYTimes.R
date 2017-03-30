@@ -1,4 +1,4 @@
-#' Training dataset
+#' Training dataset downloaded from Kaggle
 #'
 #' This dataset was downloaded from Kaggle
 
@@ -7,7 +7,7 @@
 #' @format dataframe
 NULL
 
-#' Test dataset
+#' Test dataset downloaded from Kaggle
 #'
 #' This dataset was downloaded from Kaggle
 

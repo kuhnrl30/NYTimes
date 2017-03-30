@@ -3,7 +3,7 @@
 \docType{data}
 \name{trainingset}
 \alias{trainingset}
-\title{Training dataset}
+\title{Training dataset downloaded from Kaggle}
 \format{dataframe}
 \description{
 This dataset was downloaded from Kaggle
