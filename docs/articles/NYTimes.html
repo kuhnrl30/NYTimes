@@ -37,6 +37,9 @@
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
+  <a href="http://ryankuhn.net">ryankuhn.net</a>
+</li>
+<li>
   <a href="https://github.com/kuhnrl30/NYTimes">
     <span class="fa fa-github"></span>
      
@@ -55,7 +58,6 @@
   <div class="col-md-9">
     <div class="page-header toc-ignore">
       <h1>NY Time Blog Analysis</h1>
-                        <h4 class="author">Ryan Kuhn</h4>
             
             <h4 class="date">July 7, 2016</h4>
           </div>
@@ -63,9 +65,9 @@
     
     
 <div class="contents">
-<div id="setup-the-environment-and-load-the-data" class="section level4">
-<h4 class="hasAnchor">
-<a href="#setup-the-environment-and-load-the-data" class="anchor"></a>Setup the environment and load the data</h4>
+<div id="loading-data" class="section level3">
+<h3 class="hasAnchor">
+<a href="#loading-data" class="anchor"></a>Loading Data</h3>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(tm)
 <span class="kw">library</span>(rpart)
 <span class="kw">library</span>(rpart.plot)
@@ -83,9 +85,9 @@
 train&lt;-<span class="st"> </span>trainingset
 test &lt;-<span class="st"> </span>testingset</code></pre></div>
 </div>
-<div id="data-cleaning" class="section level3">
-<h3 class="hasAnchor">
-<a href="#data-cleaning" class="anchor"></a>Data Cleaning</h3>
+<div id="data-cleaning" class="section level2">
+<h2 class="hasAnchor">
+<a href="#data-cleaning" class="anchor"></a>Data Cleaning</h2>
 <div id="setting-factors" class="section level4">
 <h4 class="hasAnchor">
 <a href="#setting-factors" class="anchor"></a>Setting factors</h4>
@@ -142,9 +144,9 @@ test$type[Recap]     &lt;-<span class="st">"Recap"</span>
 test$type&lt;-<span class="st"> </span><span class="kw">factor</span>(test$type, <span class="dt">levels=</span><span class="kw">c</span>(<span class="st">"None"</span>,<span class="st">"Question"</span>,<span class="st">"Gift"</span>,<span class="st">"Clip"</span>,<span class="st">"QnA"</span>,<span class="st">"Recap"</span>))</code></pre></div>
 </div>
 </div>
-<div id="modeling" class="section level3">
-<h3 class="hasAnchor">
-<a href="#modeling" class="anchor"></a>Modeling</h3>
+<div id="modeling" class="section level2">
+<h2 class="hasAnchor">
+<a href="#modeling" class="anchor"></a>Modeling</h2>
 <div id="split-the-training-dataset" class="section level4">
 <h4 class="hasAnchor">
 <a href="#split-the-training-dataset" class="anchor"></a>Split the training dataset</h4>
@@ -154,9 +156,9 @@ Ttrain&lt;-<span class="st"> </span><span class="kw">subset</span>(train, split=
 Ttest &lt;-<span class="st"> </span><span class="kw">subset</span>(train, split==<span class="ot">FALSE</span>)
 <span class="kw">rm</span>(split)</code></pre></div>
 </div>
-<div id="baseline-model" class="section level4">
-<h4 class="hasAnchor">
-<a href="#baseline-model" class="anchor"></a>Baseline model</h4>
+<div id="baseline-model" class="section level3">
+<h3 class="hasAnchor">
+<a href="#baseline-model" class="anchor"></a>Baseline model</h3>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">Ttrain %&gt;%
 <span class="st">  </span><span class="kw">group_by</span>(Popular) %&gt;%
 <span class="st">  </span><span class="kw">select</span>(Popular) %&gt;%
@@ -176,9 +178,9 @@ ROCRperf&lt;-<span class="st"> </span><span class="kw">performance</span>(ROCRpr
 ## 2       1   765</code></pre>
 <p>Baseline percentage is 83% Base AUC score is is 0.5</p>
 </div>
-<div id="logistic-regression" class="section level4">
-<h4 class="hasAnchor">
-<a href="#logistic-regression" class="anchor"></a>Logistic Regression</h4>
+<div id="logistic-regression" class="section level3">
+<h3 class="hasAnchor">
+<a href="#logistic-regression" class="anchor"></a>Logistic Regression</h3>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">LogMdl&lt;-<span class="st"> </span><span class="kw">glm</span>(Popular~.,<span class="dt">data=</span>Ttrain[,<span class="kw">c</span>(<span class="dv">1</span>,<span class="dv">7</span>,<span class="dv">9</span>,<span class="dv">11</span>,<span class="dv">12</span>)], <span class="dt">family=</span>binomial)
 PredLog&lt;-<span class="kw">predict</span>(LogMdl,<span class="dt">newdata=</span>Ttest[,<span class="kw">c</span>(<span class="dv">1</span>,<span class="dv">7</span>,<span class="dv">9</span>,<span class="dv">11</span>,<span class="dv">12</span>)],<span class="dt">type=</span><span class="st">"response"</span>)
 
@@ -187,11 +189,11 @@ ROCRpred&lt;-<span class="kw">prediction</span>(PredLog,Ttest$Popular)
 ROCRperf&lt;-<span class="st"> </span><span class="kw">performance</span>(ROCRpred,<span class="st">"tpr"</span>,<span class="st">"fpr"</span>)
 <span class="kw">plot</span>(ROCRperf)</code></pre></div>
 <p><img src="NYTimes_files/figure-html/unnamed-chunk-7-1.png" width="672"></p>
-<p>AUC score is 0.901</p>
+<p>AUC score is 0.895</p>
 </div>
-<div id="clustering" class="section level4">
-<h4 class="hasAnchor">
-<a href="#clustering" class="anchor"></a>Clustering</h4>
+<div id="clustering" class="section level3">
+<h3 class="hasAnchor">
+<a href="#clustering" class="anchor"></a>Clustering</h3>
 <p><em>Except…</em> clustering is doesn’t work for predictions. You’d have to do seperate models for each cluster.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">Tcluster&lt;-Ttrain[,<span class="kw">c</span>(<span class="dv">1</span>:<span class="dv">3</span>,<span class="dv">9</span>,<span class="dv">11</span>)]
 Tcluster$time&lt;-<span class="kw">scale</span>(Ttrain$WordCount)
@@ -210,13 +212,13 @@ clusterGroups&lt;-<span class="kw">data.frame</span>(<span class="dt">clusters=<
 clustdummies&lt;-<span class="kw">dummyVars</span>(clusters~.,<span class="dt">data=</span>clusterGroups)
 clusterGroupsdumb&lt;-<span class="kw">as.data.frame</span>(<span class="kw">predict</span>(clustdummies,<span class="dt">newdata=</span>clusterGroups))</code></pre></div>
 </div>
-</div>
 <div id="text-analytics" class="section level3">
 <h3 class="hasAnchor">
 <a href="#text-analytics" class="anchor"></a>Text Analytics</h3>
-<div id="prepare-the-training-set" class="section level4">
+<div id="data-cleaning-1" class="section level4">
 <h4 class="hasAnchor">
-<a href="#prepare-the-training-set" class="anchor"></a>Prepare the training set</h4>
+<a href="#data-cleaning-1" class="anchor"></a>Data Cleaning</h4>
+<p><strong>Prepare the training set</strong></p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">TrainCorpus&lt;-<span class="kw">Corpus</span>(<span class="kw">VectorSource</span>(Ttrain$Abstract))
 TrainCorpus&lt;-<span class="kw">tm_map</span>(TrainCorpus,<span class="kw">content_transformer</span>(tolower))
 TrainCorpus&lt;-<span class="kw">tm_map</span>(TrainCorpus, PlainTextDocument)
@@ -235,10 +237,7 @@ Targets&lt;-<span class="kw">colnames</span>(wordsTrain)
 <span class="kw">colnames</span>(wordsTrain) =<span class="st"> </span><span class="kw">paste</span>(<span class="st">"A"</span>, <span class="kw">colnames</span>(wordsTrain),<span class="dt">sep=</span><span class="st">""</span>)
 
 TextTrain&lt;-<span class="kw">data.frame</span>(wordsTrain,Ttrain$Popular, <span class="dt">row.names=</span><span class="ot">NULL</span>)</code></pre></div>
-</div>
-<div id="prepare-test-set" class="section level4">
-<h4 class="hasAnchor">
-<a href="#prepare-test-set" class="anchor"></a>Prepare test set</h4>
+<p><strong>Prepare validation set</strong></p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">TestCorpus&lt;-<span class="kw">Corpus</span>(<span class="kw">VectorSource</span>(Ttest$Abstract))
 TestCorpus&lt;-<span class="kw">tm_map</span>(TestCorpus,<span class="kw">content_transformer</span>(tolower))
 TestCorpus&lt;-<span class="kw">tm_map</span>(TestCorpus, PlainTextDocument)
@@ -251,9 +250,9 @@ wordsTest&lt;-<span class="kw">inspect</span>(dtmTest[,<span class="kw">colnames
 <span class="kw">colnames</span>(wordsTest) =<span class="st"> </span><span class="kw">paste</span>(<span class="st">"A"</span>, <span class="kw">colnames</span>(wordsTest),<span class="dt">sep=</span><span class="st">""</span>)
 TextTest&lt;-<span class="kw">data.frame</span>(wordsTest,Ttest$Popular,<span class="dt">row.names=</span><span class="ot">NULL</span>)</code></pre></div>
 </div>
-<div id="prepare-the-model" class="section level4">
+<div id="logistic-regression-1" class="section level4">
 <h4 class="hasAnchor">
-<a href="#prepare-the-model" class="anchor"></a>Prepare the model</h4>
+<a href="#logistic-regression-1" class="anchor"></a>Logistic Regression</h4>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">TextLogMdl&lt;-<span class="kw">glm</span>(Ttrain.Popular~.,<span class="dt">data=</span>TextTrain,<span class="dt">family=</span>binomial)
 
 TextLogPred&lt;-<span class="st"> </span><span class="kw">as.numeric</span>(<span class="kw">predict</span>(TextLogMdl,<span class="dt">newdata=</span>TextTest,<span class="dt">type=</span><span class="st">"response"</span>))
@@ -265,11 +264,12 @@ ROCRpred&lt;-<span class="st"> </span><span class="kw">prediction</span>(TextLog
 ROCRperf&lt;-<span class="st"> </span><span class="kw">performance</span>(ROCRpred,<span class="st">"tpr"</span>,<span class="st">"fpr"</span>)
 <span class="kw">plot</span>(ROCRperf)</code></pre></div>
 <p><img src="NYTimes_files/figure-html/unnamed-chunk-11-1.png" width="672"></p>
-<p>AUC score is 0.706</p>
+<p>AUC score is 0.709</p>
 </div>
-<div id="train-cart" class="section level4">
-<h4 class="hasAnchor">
-<a href="#train-cart" class="anchor"></a>Train CART</h4>
+</div>
+<div id="cart-model" class="section level3">
+<h3 class="hasAnchor">
+<a href="#cart-model" class="anchor"></a>CART Model</h3>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">CART&lt;-<span class="st"> </span><span class="kw">rpart</span>(Popular~.,<span class="dt">data=</span>Ttrain[,<span class="kw">c</span>(<span class="dv">1</span>,<span class="dv">7</span>,<span class="dv">9</span>,<span class="dv">11</span>,<span class="dv">12</span>)], 
              <span class="dt">method=</span><span class="st">"class"</span>,           
              <span class="dt">na.action=</span>na.rpart,
@@ -289,11 +289,11 @@ ROCRpred&lt;-<span class="st"> </span><span class="kw">prediction</span>(CARTPre
 ROCRperf&lt;-<span class="st"> </span><span class="kw">performance</span>(ROCRpred,<span class="st">"tpr"</span>,<span class="st">"fpr"</span>)
 <span class="kw">plot</span>(ROCRperf)</code></pre></div>
 <p><img src="NYTimes_files/figure-html/unnamed-chunk-12-2.png" width="672"></p>
-<p>AUC score is 0.734 and is not an improvement over the GLM model.</p>
+<p>AUC score is 0.741 and is not an improvement over the GLM model.</p>
 </div>
-<div id="train-random-forest" class="section level4">
-<h4 class="hasAnchor">
-<a href="#train-random-forest" class="anchor"></a>Train Random Forest</h4>
+<div id="random-forest-model" class="section level3">
+<h3 class="hasAnchor">
+<a href="#random-forest-model" class="anchor"></a>Random Forest Model</h3>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">Forest&lt;-<span class="st"> </span><span class="kw">randomForest</span>(<span class="kw">as.factor</span>(Popular)~.,
                       <span class="dt">data=</span>Ttrain[,<span class="kw">c</span>(<span class="dv">1</span>,<span class="dv">7</span>,<span class="dv">9</span>,<span class="dv">11</span>,<span class="dv">12</span>)],
                       <span class="dt">nodesize=</span><span class="dv">5</span>)
@@ -308,11 +308,11 @@ ROCRperf&lt;-<span class="st"> </span><span class="kw">performance</span>(ROCRpr
 <span class="kw">plot</span>(ROCRperf)</code></pre></div>
 <p><img src="NYTimes_files/figure-html/unnamed-chunk-13-1.png" width="672"></p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">ForestPred2&lt;-<span class="kw">predict</span>(Forest,<span class="dt">newdata=</span>test[,<span class="kw">c</span>(<span class="dv">1</span>,<span class="dv">7</span>,<span class="dv">10</span>,<span class="dv">11</span>)], <span class="dt">type=</span><span class="st">"prob"</span>,<span class="dt">metric=</span><span class="st">"ROC"</span>)</code></pre></div>
-<p>AUC score is 0.891 and is not an improvement over the GLM model.</p>
+<p>AUC score is 0.889 and is not an improvement over the GLM model.</p>
 </div>
-<div id="random-forest-using-text-analytics" class="section level4">
-<h4 class="hasAnchor">
-<a href="#random-forest-using-text-analytics" class="anchor"></a>Random Forest Using Text Analytics</h4>
+<div id="random-forest-using-text-analytics" class="section level3">
+<h3 class="hasAnchor">
+<a href="#random-forest-using-text-analytics" class="anchor"></a>Random Forest Using Text Analytics</h3>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">TtrainComb&lt;-<span class="st"> </span><span class="kw">data.frame</span>(TextTrain, Ttrain[,<span class="kw">c</span>(<span class="dv">1</span>:<span class="dv">3</span>, <span class="dv">7</span>:<span class="dv">8</span>,<span class="dv">11</span>:<span class="dv">12</span>)])
 
 ForestComb&lt;-<span class="st"> </span><span class="kw">randomForest</span>(<span class="kw">as.factor</span>(Ttrain.Popular)~.,
@@ -330,11 +330,11 @@ ROCRpred&lt;-<span class="st"> </span><span class="kw">prediction</span>(ForestP
 ROCRperf&lt;-<span class="st"> </span><span class="kw">performance</span>(ROCRpred,<span class="st">"tpr"</span>,<span class="st">"fpr"</span>)
 <span class="kw">plot</span>(ROCRperf)</code></pre></div>
 <p><img src="NYTimes_files/figure-html/unnamed-chunk-14-1.png" width="672"></p>
-<p>AUC score is 0.942- best model yet!</p>
+<p>AUC score is 0.931- best model yet!</p>
 </div>
-<div id="train-ensembling" class="section level4">
-<h4 class="hasAnchor">
-<a href="#train-ensembling" class="anchor"></a>Train ensembling</h4>
+<div id="ensembling" class="section level3">
+<h3 class="hasAnchor">
+<a href="#ensembling" class="anchor"></a>Ensembling</h3>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">AUCs&lt;-<span class="kw">c</span>(.<span class="dv">8756</span>,.<span class="dv">7048</span>,.<span class="dv">7249</span>,.<span class="dv">8811</span>,.<span class="dv">9453</span>)
 Predictions&lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">GLM=</span>PredLog,
                          <span class="dt">Text=</span>TextLogPred, 
@@ -349,11 +349,15 @@ ROCRpred&lt;-<span class="st"> </span><span class="kw">prediction</span>(Temp,Tt
 ROCRperf&lt;-<span class="st"> </span><span class="kw">performance</span>(ROCRpred,<span class="st">"tpr"</span>,<span class="st">"fpr"</span>)
 <span class="kw">plot</span>(ROCRperf)</code></pre></div>
 <p><img src="NYTimes_files/figure-html/unnamed-chunk-15-1.png" width="672"></p>
-<p>AUC score is 0.924</p>
+<p>AUC score is 0.916and is the best score yet.</p>
 </div>
-<div id="test-nlp" class="section level4">
-<h4 class="hasAnchor">
-<a href="#test-nlp" class="anchor"></a>Test NLP</h4>
+</div>
+<div id="predictions" class="section level2">
+<h2 class="hasAnchor">
+<a href="#predictions" class="anchor"></a>Predictions</h2>
+<div id="text-analytics-1" class="section level3">
+<h3 class="hasAnchor">
+<a href="#text-analytics-1" class="anchor"></a>Text Analytics</h3>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">TestCorpus2&lt;-<span class="kw">Corpus</span>(<span class="kw">VectorSource</span>(test$Abstract))
 TestCorpus2&lt;-<span class="kw">tm_map</span>(TestCorpus2, <span class="kw">content_transformer</span>(tolower))
 TestCorpus2&lt;-<span class="kw">tm_map</span>(TestCorpus2, PlainTextDocument)
@@ -366,9 +370,9 @@ wordsTest2&lt;-<span class="kw">inspect</span>(dtmTest2[,<span class="kw">colnam
 <span class="kw">colnames</span>(wordsTest2) =<span class="st"> </span><span class="kw">paste</span>(<span class="st">"A"</span>, <span class="kw">colnames</span>(wordsTest2),<span class="dt">sep=</span><span class="st">""</span>)
 TextTest2&lt;-<span class="kw">data.frame</span>(wordsTest2,<span class="dt">row.names=</span><span class="ot">NULL</span>)</code></pre></div>
 </div>
-<div id="test-random-forest-2" class="section level4">
-<h4 class="hasAnchor">
-<a href="#test-random-forest-2" class="anchor"></a>Test Random Forest 2</h4>
+<div id="random-forest" class="section level3">
+<h3 class="hasAnchor">
+<a href="#random-forest" class="anchor"></a>Random Forest</h3>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">TtestComb2&lt;-<span class="st"> </span><span class="kw">data.frame</span>(TextTest2, test[,<span class="kw">c</span>(<span class="dv">1</span>:<span class="dv">3</span>,<span class="dv">7</span>:<span class="dv">8</span>,<span class="dv">10</span>:<span class="dv">11</span>)])
 
 
@@ -390,9 +394,9 @@ ForestPredComb2 &lt;-<span class="st"> </span><span class="kw">predict</span>(Fo
                            <span class="dt">type=</span><span class="st">"prob"</span>,
                            <span class="dt">metric=</span><span class="st">"ROC"</span>)</code></pre></div>
 </div>
-<div id="weight-the-models" class="section level4">
-<h4 class="hasAnchor">
-<a href="#weight-the-models" class="anchor"></a>Weight the Models</h4>
+<div id="weight-the-models" class="section level3">
+<h3 class="hasAnchor">
+<a href="#weight-the-models" class="anchor"></a>Weight the Models</h3>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">Predictions2&lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">GLM=</span>PredLog2,
                           <span class="dt">Text=</span>TextLogPred2, 
                           <span class="dt">CART=</span>CARTPred2[,<span class="dv">2</span>], 
@@ -404,7 +408,7 @@ Temp2&lt;-<span class="st"> </span><span class="kw">rowSums</span>(weightedPred2
 
 Submit2&lt;-<span class="kw">data.frame</span>(<span class="dt">UniqueID=</span>test$UniqueID,<span class="dt">Probability1=</span>Temp2)
 
-<span class="co"># Just RandomForestComn</span>
+<span class="co">#Just RandomForestComn</span>
 Submit2&lt;-<span class="kw">data.frame</span>(<span class="dt">UniqueID=</span>test$UniqueID,<span class="dt">Probability1=</span>ForestPredComb2[,<span class="dv">2</span>])</code></pre></div>
 </div>
 </div>
@@ -412,6 +416,14 @@ Submit2&lt;-<span class="kw">data.frame</span>(<span class="dt">UniqueID=</span>
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
+        <div id="tocnav">
+      <h2>Contents</h2>
+      <ul class="nav nav-pills nav-stacked">
+<li><a href="#data-cleaning">Data Cleaning</a></li>
+      <li><a href="#modeling">Modeling</a></li>
+      <li><a href="#predictions">Predictions</a></li>
+      </ul>
+</div>
       </div>
 
 </div>

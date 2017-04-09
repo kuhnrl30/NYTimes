@@ -4,4 +4,6 @@
 ^docs/*
 ^\.Rhistory
 ^\.gitignore
-_config.yml
+_pkgdown.yml
+^index.Rmd
+README.md

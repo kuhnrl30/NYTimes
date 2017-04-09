@@ -16,7 +16,6 @@ library(NYTimes)
 
 data(trainingset)
 data(testingset)
-
 train<- trainingset
 test <- testingset
 
@@ -278,6 +277,6 @@ Temp2<- rowSums(weightedPred2,na.rm=T)
 
 Submit2<-data.frame(UniqueID=test$UniqueID,Probability1=Temp2)
 
-#Just RandomForestComn
+# Just RandomForestComn
 Submit2<-data.frame(UniqueID=test$UniqueID,Probability1=ForestPredComb2[,2])
 
